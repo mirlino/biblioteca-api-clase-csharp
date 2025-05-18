@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
+using Azure;
 using BibliotecaAPI.Datos;
 using BibliotecaAPI.DTOs;
 using BibliotecaAPI.Entidades;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,7 +37,7 @@ namespace BibliotecaAPI.Controllers
         }
 
         [HttpGet("{id:int}", Name = "ObtenerAutor")] // api/autores/id
-        public async Task<ActionResult<AutorDTO>> Get(int id)
+        public async Task<ActionResult<AutorConLibrosDTO>> Get(int id)
         {
             var autor = await context.Autores
                 .Include(x => x.Libros)
@@ -46,7 +48,7 @@ namespace BibliotecaAPI.Controllers
                 return NotFound();
             }
 
-            var autorDTO = mapper.Map<AutorDTO>(autor);
+            var autorDTO = mapper.Map<AutorConLibrosDTO>(autor);
 
             return autorDTO;
         }
@@ -83,7 +85,41 @@ namespace BibliotecaAPI.Controllers
             autor.Id = id;
             context.Update(autor);
             await context.SaveChangesAsync();
-            return Ok();
+            return NoContent();
+        }
+
+        // USO DEL PATCH
+        [HttpPatch("{id:int}")] // api/autores/id
+        public async Task<ActionResult> Patch(int id, JsonPatchDocument<AutorPatchDTO> patchDoc)
+        {
+           if (patchDoc is null)
+            {
+                return BadRequest();
+            }
+            
+            var autorDB = await context.Autores.FirstOrDefaultAsync(x => x.Id == id);
+
+            if ( autorDB is null )
+            {
+                return NotFound();
+            }
+
+            var autorPatchDTO = mapper.Map<AutorPatchDTO>(autorDB);
+
+            patchDoc.ApplyTo(autorPatchDTO, ModelState);
+
+            var esValido = TryValidateModel(autorPatchDTO);
+
+            if ( !esValido ) 
+            {
+                return ValidationProblem();
+            }
+
+            mapper.Map(autorPatchDTO, autorDB); 
+
+            await context.SaveChangesAsync();
+
+            return NoContent();
         }
 
         [HttpDelete("{id:int}")] // api/autores/id
@@ -93,7 +129,7 @@ namespace BibliotecaAPI.Controllers
                 .Where(x => x.Id == id)
                 .ExecuteDeleteAsync();
             if (registrosBorrados == 0){ return NotFound();}
-            return Ok();
+            return NoContent();
         }
 
     }

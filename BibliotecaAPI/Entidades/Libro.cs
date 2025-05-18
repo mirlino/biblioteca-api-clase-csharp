@@ -10,5 +10,6 @@ namespace BibliotecaAPI.Entidades
         public required string Titulo { get; set; }
         public int AutorId { get; set; }
         public Autor? Autor { get; set; } // Relación muchos a uno
+        public List<Comentario>? Comentarios { get; set; } = []; // Relación uno a muchos
     }
 }

@@ -7,8 +7,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Area de servicios
 builder.Services.AddAutoMapper(typeof(Program));
 
-builder.Services.AddControllers().AddJsonOptions(opciones => 
-opciones.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+// Para cuando no se tiene el uso de DTO's
+//builder.Services.AddControllers().AddJsonOptions(opciones => 
+//    opciones.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+
+// Para cuando se tiene el uso de DTO's y se usara el patch
+builder.Services.AddControllers().AddNewtonsoftJson();
 
 
 
